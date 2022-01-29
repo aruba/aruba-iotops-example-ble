@@ -1,11 +1,25 @@
 # IoT Operations Example Ble App
 
-## Overview
 This is an example application for Hewlett Packard Enterprise (HPE) IoT Operations (IoTOps) project that guides you to develop your own applications.
-This example app covers the basic app functions: 1) classifying BLE devices with iBeacon Device Class using a Lua script, and 2) taking data from IoT Operations collector and transferring the data to your own cloud service.
-In this app, we choose HiveMQ as the cloud service as an example.
+<br> This example app covers the basic app functions: 
+<br> 1) classifying BLE devices with iBeacon Device Class using a Lua script
+<br> 2) taking data from IoT Operations collector and transferring the data to your own cloud service.
+<br> In this app, we choose HiveMQ as the cloud service as an example.
 
 Before developing your own app, please read the documents related to HPE IoTOps, You need to know how the app will interact with HPE IoTOps. More information please visit [https://help.central.arubanetworks.com/latest/documentation/online_help/content/allowlist/iot.htm](https://help.central.arubanetworks.com/latest/documentation/online_help/content/allowlist/iot.htm).
+
+Contents
+* [Topology](#topology)
+* [Project structure](#project-structure)
+  * [Lua](#lua)
+  * [Container](#container)
+    * [Access IoT Operations infrastructure service](#access-iot-operations-infrastructure-service)
+* [Build and Application Onboard](#build-and-application-onboard)
+  * [Container Build](#container-build)
+  * [AppBundle Configuration](#appbundle-configuration)
+  * [Installation](#installation)
+  * [Data Display](#data-display)
+* [License](#license)
 
 ## Topology
 ![topology](./resource/topology.jpg)
