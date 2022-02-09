@@ -147,9 +147,9 @@ Access MQTT web page [http://www.hivemq.com/demos/websocket-client/](http://www.
 <br>
 On this web page, we will have the following operate step:
 ```
-step 1: on Connection part, type "test.mosquitto.org" into Host field, then click "Connect" button  (It will establish a connection with MQTT broker)
-step 2: on Subscriptions part, click "Add New Topic Subscription" button, then it will pop up a window, you should type your own public topic name into Topic field, then click "Subscribe" button. The topic name is set when the app is installed. If you haven't set this topic, we also have default value: "app2broker_topic".
-step 3: on the "Messages" part, you will see the data from your app.
+1. on Connection part, type "test.mosquitto.org" into Host field, then click "Connect" button  (It will establish a connection with MQTT broker)
+2. on Subscriptions part, click "Add New Topic Subscription" button, then it will pop up a window, you should type your own public topic name into Topic field, then click "Subscribe" button. The topic name is set when the app is installed. If you haven't set this topic, we also have default value: "app2broker_topic".
+3. on the "Messages" part, you will see the data from your app.
 ```
 
 ## License
