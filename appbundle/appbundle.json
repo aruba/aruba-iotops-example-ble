@@ -1,0 +1,71 @@
+{
+  "summary": "iot operations example Ble app is to guid third party to develop their own app.",
+  "container": {
+    "resource-usage": {
+      "cpu-max": "1",
+      "cpu-min": "0.5",
+      "mem-max": "1024Mi",
+      "mem-min": "512Mi"
+    },
+    "image-url": "aruba-iotops-example-ble:1.0.0-release",
+    "subscription-list": [
+      {
+        "match-value": "iBeacon",
+        "match-type": "DEVICE_CLASS"
+      }
+    ],
+    "required-environment-variables": [
+      {
+        "supported-values": [],
+        "name": "APP_TO_BROKER_TOPIC",
+        "description": "app publish data to mqtt broker",
+        "type": "OPTIONAL"
+      },
+      {
+        "supported-values": [],
+        "name": "BROKER_TO_APP_TOPIC",
+        "description": "mqtt broker send data to app",
+        "type": "OPTIONAL"
+      }
+    ]
+  },
+  "platform-url": "https://www.arubanetworks.com",
+  "required-user-subscription": false,
+  "icon": "//us1-cdn.openchannel.io/5e79096d64aa49631f901003/public/61b75f5683c8481a0d8b58ea.png",
+  "description": "iot operations example Ble app is to guid third party to develop their own app. This app will be shared on open source platform. It will follow open source license.",
+  "default-app-permission": {
+    "device-class-permissions": [
+      {
+        "device-context-access": "BLOCK",
+        "ble-gatt-operations": "BLOCK",
+        "device-class": "iBeacon",
+        "ble-script-access": "BLOCK"
+      }
+    ],
+    "allowed-external-urls": [
+      "test.mosquitto.org"
+    ],
+    "allowed-device-class-classifications": [
+      "iBeacon"
+    ]
+  },
+  "author-website": "https://www.arubanetworks.com",
+  "required-user-permission": false,
+  "required-user-ca-certificates": false,
+  "lua-script": {
+    "subscription-list": [
+      {
+        "match-value": "4C0002",
+        "match-type": "VENDOR"
+      }
+    ],
+    "script": "5e79096d64aa49631f901003/private/61c461f96476be04a1671984.lua"
+  },
+  "categories": [
+    "iot operation",
+    "example app",
+    "ble app"
+  ],
+  "internal-app": false,
+  "required-user-allowed-external-urls": false
+}

@@ -87,7 +87,7 @@ make docker
 ```
 
 ### AppBundle Configuration
-You should provide appBundle config info as below to let us help you config,
+You should provide appBundle config info as below to let us help you config, the format please refer to [appbundle.json](./appbundle/appbundle.json)
 - [required] app name: 
   for example: iot_operations_example_ble_app
 - [required] app icon: 
