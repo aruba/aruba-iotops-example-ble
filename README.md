@@ -2,7 +2,7 @@
 
 This is an example application for HPE Aruba Networking IoT Operations project that guides you to develop your own IoT apps. This app implements the Device Classification and Edge Compute + Data Transport functionalities. Any APIs and Edge Compute functionality can be added as part of your docker container as per your use case.
 
-**Note:** This app uses uses Lua script for setting the device class attribute. The data transport functionality is written in GoLang.
+**Note:** This app uses Lua script for setting the device class attribute. The data transport functionality is written in GoLang.
 
 <br> 1) classifying BLE devices with iBeacon Device Class using a Lua script
 <br> 2) taking data from IoT Operations connector and transferring the data to your own cloud service. This app uses <br> HiveMQ as the cloud service as an example.
