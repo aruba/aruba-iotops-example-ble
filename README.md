@@ -1,12 +1,13 @@
 # IoT Operations Example Ble App
 
-This is an example application for Hewlett Packard Enterprise (HPE) IoT Operations (IoTOps) project that guides you to develop your own applications.
-<br> This example app covers the basic app functions: 
-<br> 1) classifying BLE devices with iBeacon Device Class using a Lua script
-<br> 2) taking data from IoT Operations collector and transferring the data to your own cloud service.
-<br> In this app, we choose HiveMQ as the cloud service as an example.
+This is an example application for HPE Aruba Networking IoT Operations project that guides you to develop your own IoT apps. This app implements the Device Classification and Edge Compute + Data Transport functionalities. Any APIs and Edge Compute functionality can be added as part of your docker container as per your use case.
 
-Before developing your own app, please read the documents related to HPE IoTOps, You need to know how the app will interact with HPE IoTOps. More information please visit [https://help.central.arubanetworks.com/latest/documentation/online_help/content/allowlist/iot.htm](https://help.central.arubanetworks.com/latest/documentation/online_help/content/allowlist/iot.htm).
+**Note:** This app uses Lua script for setting the device class attribute. The data transport functionality is written in GoLang.
+
+<br> 1) classifying BLE devices with iBeacon Device Class using a Lua script
+<br> 2) taking data from IoT Operations connector and transferring the data to your own cloud service. This app uses <br> HiveMQ as the cloud service as an example.
+
+Before developing your own app, please read the documentation for setting up  your IoT hardware, software and related accounts and configurations related to HPE Aruba IoT Operations,[Configure your IoT setup in HPE Aruba Central](https://www.arubanetworks.com/techdocs/central/latest/content/nms/apps/iot.htm)
 
 Contents
 * [Topology](#topology)
@@ -51,6 +52,8 @@ Application developers can define their own data processing logic and integrate 
 
 In this example, the application receives the subscribed device packets from collector's API Gateway, then forwards the packet to HiveMQ topic.
 
+**Note:** An app developer need not follow this same project structure. The docker container and / or  Lua script can be uploaded via HPE Aruba Networking App Developer Portal (ADP) app creation wizard. This structure and the scripts within should be used as a reference.***
+
 #### Access IoT Operations infrastructure service
 Container programs can access collector through HTTP API as follows:
 ```go
@@ -77,7 +80,7 @@ func (c *httpClient) Connect() {
 }
 ```
 
-NOTE: More IoTOps API please visit [https://app.swaggerhub.com/apis/davix/aruba_iot_gateway_container_api/2.0](https://app.swaggerhub.com/apis/davix/aruba_iot_gateway_container_api/2.0)
+**Note**: More IoTOps API please visit [https://app.swaggerhub.com/apis/davix/aruba_iot_gateway_container_api/2.0](https://app.swaggerhub.com/apis/davix/aruba_iot_gateway_container_api/2.0)
 
 ## Build and Application Onboard
 ### Container Build
@@ -87,54 +90,53 @@ make docker
 ```
 
 ### AppBundle Configuration
-You should provide appBundle config info as below to let us help you config,
-- [required] app name: 
-  for example: iot_operations_example_ble_app
-- [required] app icon: 
-  please design your own app icon
-- [required] Summary: 
-  app function summary
-- [required] app description: 
-  please give us a brief introduction of your app
-- [optional] Author's website: 
-- [required] app categories:   
-  for example: example app、iBeacon
-- [optional] Lua script: 
-  If you use Lua script to classify device, you have to send your script file to us
-  - [required]subscription list:
-    every item have two value: match type、match value. you should tell us how to classify your device data. 
-    for example: iBeacon data: 0201041AFF 4C0002 15F7826DA64FA24E988024BC5B71E0893E00000000C5. match type:VENDOR / match value: 4C0002
-- [optional] container image path: 
-  If you only use Lua scripts to interact with HPE IoT Operations platform, you don't need to supply container image path 
-  - [optional]container environment: 
-    if your container need to config environment variables, please give us the keys and values. format like: key:value
-- [optional] Container Resource Usage CPU Min: 
-  for example: 0.5
-- [optional] Container Resource Usage CPU Max: 
-  for example: 1
-- [optional] Container Resource Usage Mem Min: 
-  for example: 512Mi
-- [optional] Container Resource Usage Mem Max: 
-  for example: 1024Mi
-- [optional] Container Subscription list: 
-  container should config subscription list. for example: device class name (It already is set in Lua script)
-  Match Type: DEVICE_CLASS  MATCH_VALUE: iBeacon
-- [optional] Container Required Environment Variables
-  If your app need to config some environment variables, please let us know.Every one variable we have below fields can be set
-    - [required]Name: variable name
-    - [optional]Description 
-    - [optional]Default value
-    - [optional]Validation: regex pattern that can be used to validate the environment variable
-    - [required]Type: have two values: OPTIONAL、REQUIRED; you need to choose one of them
-    - [optional]Placeholder
-    - [optional]Supported Values: add supported values for this key 
-- [optional]Default App Permission Allowed External URLS: 
-  if you need to interact with app through url, you should config external url.
-  for example: test.mosquitto.org
-- [optional] Default App Permission Allowed Device Class Classifications: 
-  device class name will be config
-- [optional] Default App Permission Device Class Permissions
-  device class name will be config
+
+The IoT app developer should use ADP to create and manage their app. The app creation wizard will walk you through the required and optional fields. The ADP app creation wizard also provides a Lua script editor, where a user can create or upload their Lua script and a docker container library where container images can be uploaded and specified for use in the respective apps. Below is a summary of the required and optional app metadata for the AppBundle for this example.
+
+[required] App Icon  
+[required] App Name  
+[required] Summary  
+[required] Description  
+[optional] Release notes for this version of the app  
+[required] App support: URL, email or phone of the customer support  
+[required] Developer website URL : Author’s website with more information about the App  
+[optional] Platform URL  
+[optional] Privacy policy URL  
+[optional] License agreement URL  
+[required] Categories: Choose up to 3 app categories like Enterprise, Location, Hospitality, Networking, etc.  
+[required] Supported Platforms : Choose from Legacy AP, AP as IoT Connector and the VM based Data Collector.  
+[required] Minimum SDK version : Specify lowest SDK version that your app can support  
+[required] App features
+
+**In this example, you would choose BLE and Edge Compute & back end connections** 
+
+BLE section: Enter the details and edit Lua script to decode bluetooth packets
+
+[required] Subscriptions: Create the subscription match for the BLE advertisements  
+[required] Match Type : Select one of the folowing subscription types  
+           MANUFACTURER ID, SERVICE UUID, Local Name, Device Class  
+[required] Match Value : Matching value for current subscription
+[optional] Additional Proprietary Value  
+[required] Lua Script : Upload your lua script or create a new one
+[required] Device classes : Select which device classes your app can classify
+[required] Permissions : A list of permissions by device class
+
+Edge Compute & Back end connections section:
+
+[required] Container image for data collector  
+[required] CPU usage for mini data collector : Specify max CPU usage on different sizes of the IoT Connector  
+[required] Memory usage for mini data collector : Specify max memory usage on different sizes of the IoT Connector  
+
+[required] Subscriptions : Create the subscription match for the container  
+[optional] Outbound firewall permissions : Allowlisted URL for external access.
+[optional] API Permissions : A list of permissions by device class
+[optional] User configuration
+[optional] Permissions
+[optional] Subscriptions
+[optional] Outbound firewall
+[optional] Certificates
+[optional] Enviroment variables : A list of enviroment variables definitions
+
 
 ### Installation
 After config AppBundle, you will see your app in your Aruba central. You only need to config the MQTT topic.
