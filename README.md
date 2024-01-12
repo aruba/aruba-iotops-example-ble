@@ -20,6 +20,7 @@ Contents
   * [AppBundle Configuration](#appbundle-configuration)
   * [Installation](#installation)
   * [Data Display](#data-display)
+* [Jenkins CICD pipeline](#jenkins-cicd-pipeline)
 * [License](#license)
 
 ## Topology
@@ -34,6 +35,7 @@ aruba-iotops-example-ble
     |   |-- Makefile
     |-- lua
     |-- resource
+    |-- exampleapp-v1.jenkins
     |-- README.md
     |-- VERSION
     |-- LICENSE
@@ -151,6 +153,62 @@ On this web page, we will have the following operate step:
 1. on Connection part, type "test.mosquitto.org" into Host field, then click "Connect" button  (It will establish a connection with MQTT broker)
 2. on Subscriptions part, click "Add New Topic Subscription" button, then it will pop up a window, you should type your own public topic name into Topic field, then click "Subscribe" button. The topic name is set when the app is installed. If you haven't set this topic, we also have default value: "app2broker_topic".
 3. on the "Messages" part, you will see the data from your app.
+
+## Jenkins CICD pipeline
+Pre requisite for Node on which jenkins pipeline is executed.
+1. Installables required for jenkins pipeline
+    jq, curl git, docker, bash
+2. Installables required for jenkins pipeline
+    golang, make
+
+Create a new Jenkins pipeline with below mentioned parameters and use the jenkins script available in exampleapp-v1.jenkins file.
+
+Parameters:
+1. url
+    type: String
+    example: https://cl-naMle-api.lite.arubadev.cloud.hpe.com
+    description: Central URL required for NBAPI call. It can be obtained from Central NBAPI page
+2. token
+    type: String
+    example: WjxstwgRaPVOgyhy1JT64o8Mi031WhA7
+    description: Central token required for NBAPI authorization. It can be obtained from Central NBAPI My Apps and token page
+3. appid
+    type: String
+    example: 659bbda98db7a017ddd9147a
+    description: ADP application id to be updated for container image
+4. imagename
+    type: String
+    example: ExampleApp
+    description: Image name which should be used while uploading container image to ADP
+5. github_repo
+    type: String
+    example: https://git-token@github.com/aruba/aruba-iotops-example-ble
+    description: Git repo url detail (In case ssh of ssh authentication git-token is not required)
+6. build_command
+    type: String
+    example: cd aruba-iotops-example-ble/container/ &&  make docker
+    description: Build command required for container image build
+7. gitimagename
+    type: String
+    example: aruba-iotops-example-ble
+    description: image name generated from git container image build
+8. gitimageversion
+    type: String
+    example: 1.0.0-release
+    description: image version generated from git container image build
+9. timeout
+    type: String
+    example: 120
+        description: Wait time required during image upload
+
+Jenkins pipeline uses git details and build docker image, which gets saved as tar file and md5 is also generated on tar for verification purpose.
+
+Image version details retrieved from ADP and is incremented by 1 and image upload to ADP gets triggered.
+Once image is uploaded, pipeline waits for configured time.
+
+After which app version details based on appid for draft state gets retrieved and based on appid and app version - app information gets retrieved
+
+App information gets updated for container image (which was uploaded earlier) and the updated information is stored in ADP.
 
 ## License
 [MIT LICENSE](./LICENSE)
