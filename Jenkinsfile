@@ -2,7 +2,7 @@ pipeline {
     agent {label 'mp-vm'}
 
     stages {
-        stage('Build') {
+        stage('Step 1: Docker Build Image') {
             steps {
                 sh '''
 rm -Rf aruba-iotops-example-ble
@@ -12,14 +12,23 @@ git clone --depth 1 --single-branch -b main ${github_repo}
 eval ${build_command}
 
 docker save ${gitimagename}:${gitimageversion} > ${imagename}.tar
-
-md5val=$(md5sum ${imagename}.tar | awk '{print $1}')
-
+                '''
+            }
+        }
+        stage('Step 2: Retrieve ADP image') {
+            steps {
+                sh '''
 eval "curl '${url}/iot_operations/api/v1/adp/images/maxversion?pageNumber=1&pageSize=1000' \
     -H 'authorization: Bearer ${token}' -o maxversion.json"
 
 cat maxversion.json
-
+                '''
+            }
+        }
+        stage('Step 3: Upload New Image version to ADP') {
+            steps {
+                sh '''
+md5val=$(md5sum ${imagename}.tar | awk '{print $1}')
 version=$(jq '.content | .[] | select (.name == "'${imagename}'")'.version+1 maxversion.json)
 
 if [ -z ${version} ]; then
@@ -48,8 +57,12 @@ cat response.sh
 cat response_second.json
 
 sleep ${timeout}
-
-
+                '''
+            }
+        }
+        stage('Step 4: Retrieve ADP app for updation') {
+            steps {
+                sh '''
 eval "curl '${url}/iot_operations/api/v1/adp/apps/${appid}/versions?pageNumber=1&pageSize=1000' \
 -H 'authorization: Bearer ${token}' -o appversion.json"
 
@@ -60,6 +73,12 @@ eval "curl '${url}/iot_operations/api/v1/adp/apps/${appid}/details?version=${ver
   -o app.json"
 
 cat app.json
+                '''
+            }
+        }
+        stage('Step 5: Update app to ADP for updated image') {
+            steps {
+                sh '''
 app_container_uuid=$(jq .container_image_uuid app.json)
 echo "UUID for app: $app_container_uuid"
 
@@ -74,6 +93,7 @@ eval $(sed -i 's/"container_image_uuid":'${app_container_uuid}'/"container_image
 app_container_uuid=$(jq .container_image_uuid app.json)
 echo "UUID for app: $app_container_uuid"
 
+version=$(jq '.content | .[] | select (.status == "DRAFT")'.version appversion.json)
 
 eval "curl '${url}/iot_operations/api/v1/adp/apps/draft/${appid}/version/${version}' \
   -X POST \
@@ -90,4 +110,3 @@ cat appupdate.json
         }
     }
 }
-

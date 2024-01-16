@@ -35,7 +35,7 @@ aruba-iotops-example-ble
     |   |-- Makefile
     |-- lua
     |-- resource
-    |-- exampleapp-v1.jenkins
+    |-- Jenkinsfile
     |-- README.md
     |-- VERSION
     |-- LICENSE
