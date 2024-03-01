@@ -157,49 +157,53 @@ On this web page, we will have the following operate step:
 ## Jenkins CICD pipeline
 Pre requisite for Node on which jenkins pipeline is executed.
 1. Installables required for jenkins pipeline
-    jq, curl git, docker, bash
-2. Installables required for jenkins pipeline
-    golang, make
+  * jq, curl git, docker, bash
+1. Installables required for example app git repo for docker build
+  * golang, make
 
-Create a new Jenkins pipeline with below mentioned parameters and use the jenkins script available in exampleapp-v1.jenkins file.
+Create a new Jenkins pipeline with below mentioned parameters and use the jenkins script available in Jenkinsfile file.
 
 Parameters:
 1. url
-    type: String
-    example: https://cl-naMle-api.lite.arubadev.cloud.hpe.com
-    description: Central URL required for NBAPI call. It can be obtained from Central NBAPI page
+- type: String
+- example: https://pavan257-cl-hybrid-arm-578-0-api.lite.arubadev.cloud.hpe.com
+- description: Central URL required for NBAPI call. It can be obtained from Central NBAPI page
 2. token
-    type: String
-    example: WjxstwgRaPVOgyhy1JT64o8Mi031WhA7
-    description: Central token required for NBAPI authorization. It can be obtained from Central NBAPI My Apps and token page
+ - type: String
+- example: WjxstwgRaPVOgyhy1JT64o8Mi031WhA7
+- description: Central token required for NBAPI authorization. It can be obtained from Central NBAPI My Apps and token page
 3. appid
-    type: String
-    example: 659bbda98db7a017ddd9147a
-    description: ADP application id to be updated for container image
+- type: String
+- example: 659bbda98db7a017ddd9147a
+- description: ADP application id to be updated. It can be obtained from ADP app version page- it is available in url
 4. imagename
-    type: String
-    example: ExampleApp
-    description: Image name which should be used while uploading container image to ADP
+- type: String
+-  example: ExampleApp
+- description: Image name which should be used while uploading container image to ADP
 5. github_repo
-    type: String
-    example: https://git-token@github.com/aruba/aruba-iotops-example-ble
-    description: Git repo url detail (In case ssh of ssh authentication git-token is not required)
+- type: String
+- example: https://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@github.com/aruba/aruba-iotops-example-ble
+- description: Git repo url detail
 6. build_command
-    type: String
-    example: cd aruba-iotops-example-ble/container/ &&  make docker
-    description: Build command required for container image build
+- type: String
+- example: cd aruba-iotops-example-ble/container/ &&  make docker
+- description: Build command required for container image build
 7. gitimagename
-    type: String
-    example: aruba-iotops-example-ble
-    description: image name generated from git container image build
+- type: String
+- example: aruba-iotops-example-ble
+- description: image name generated from git container image build
 8. gitimageversion
-    type: String
-    example: 1.0.0-release
-    description: image version generated from git container image build
-9. timeout
-    type: String
-    example: 120
-        description: Wait time required during image upload
+- type: String
+- example: 1.0.0-release
+- description: Image version generated from git container image build
+9. lua_file_path
+- type: String
+- example: aruba-iotops-example-ble/lua/ibeacon.lua
+- description: Lua file path inside git repo
+10. timeout
+- type: String
+- example: 120
+- description: Wait time in seconds required during image upload. It should be configred based on image size (expected time for image upload to be completed in image repository)
 
 Jenkins pipeline uses git details and build docker image, which gets saved as tar file and md5 is also generated on tar for verification purpose.
 

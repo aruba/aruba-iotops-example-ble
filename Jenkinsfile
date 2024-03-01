@@ -10,12 +10,17 @@ rm -Rf aruba-iotops-example-ble
 git clone --depth 1 --single-branch -b main ${github_repo}
 
 eval ${build_command}
-
+                '''
+            }
+        }
+        stage('Step 2: Save Docker Image') {
+            steps {
+                sh '''
 docker save ${gitimagename}:${gitimageversion} > ${imagename}.tar
                 '''
             }
         }
-        stage('Step 2: Retrieve ADP image') {
+        stage('Step 3: Retrieve ADP image') {
             steps {
                 sh '''
 eval "curl '${url}/iot_operations/api/v1/adp/images/maxversion?pageNumber=1&pageSize=1000' \
@@ -25,7 +30,7 @@ cat maxversion.json
                 '''
             }
         }
-        stage('Step 3: Upload New Image version to ADP') {
+        stage('Step 4: Upload Image to ADP') {
             steps {
                 sh '''
 md5val=$(md5sum ${imagename}.tar | awk '{print $1}')
@@ -60,7 +65,7 @@ sleep ${timeout}
                 '''
             }
         }
-        stage('Step 4: Retrieve ADP app for updation') {
+        stage('Step 5: Retrieve ADP app for updation') {
             steps {
                 sh '''
 eval "curl '${url}/iot_operations/api/v1/adp/apps/${appid}/versions?pageNumber=1&pageSize=1000' \
@@ -76,7 +81,7 @@ cat app.json
                 '''
             }
         }
-        stage('Step 5: Update app to ADP for updated image') {
+        stage('Step 6: Update app to ADP for updated image and lua script') {
             steps {
                 sh '''
 app_container_uuid=$(jq .container_image_uuid app.json)
@@ -93,6 +98,11 @@ eval $(sed -i 's/"container_image_uuid":'${app_container_uuid}'/"container_image
 app_container_uuid=$(jq .container_image_uuid app.json)
 echo "UUID for app: $app_container_uuid"
 
+if [ ! -d ${lua_file_path} ]; then
+    lua_base=$(base64 -w 0 ${lua_file_path})
+    eval $(jq '.lua_script.file_id=null | .lua_script.data="'${lua_base}'"' app.json > app_v1.json)
+fi
+
 version=$(jq '.content | .[] | select (.status == "DRAFT")'.version appversion.json)
 
 eval "curl '${url}/iot_operations/api/v1/adp/apps/draft/${appid}/version/${version}' \
@@ -100,7 +110,7 @@ eval "curl '${url}/iot_operations/api/v1/adp/apps/draft/${appid}/version/${versi
   -H 'authorization: Bearer ${token}' \
   -H 'content-type: application/json' \
   -H 'referer: ${url}/swagger/central/' \
-  --data-raw ${prefix}$(cat app.json)${prefix} \
+  --data-raw ${prefix}$(cat app_v1.json)${prefix} \
   -o appupdate.json" > response.sh
 
 cat appupdate.json
@@ -110,3 +120,4 @@ cat appupdate.json
         }
     }
 }
+
