@@ -1,9 +1,6 @@
 #Configure your docker image name with registry url
 DOCKER_IMG=aruba-iotops-example-ble:$(shell head ../VERSION)
 
-#Support both data collector and AP as connector
-DOCKER_FLAGS +=--platform=linux/amd64,linux/arm64 --push
-
 .PHONY: build
 build:
 	go build -o app ./application
@@ -12,6 +9,17 @@ build:
 test:
 	go test -v ./application
 
-.PHONY: docker
-docker:
-	docker buildx build ${DOCKER_FLAGS} -t $(DOCKER_IMG) .
+.PHONY: docker-local
+docker-local:
+	docker buildx build --load -t $(DOCKER_IMG) .
+
+#Support both data collector and AP as connector
+IMAGE_PLATFORM +=--platform=linux/amd64,linux/arm64,linux/arm/v7
+.PHONY: publish-docker
+publish-docker:
+	docker buildx build ${IMAGE_PLATFORM} --push -t $(DOCKER_IMG) .
+
+#Build a tar to upload in Aruba Developer Portal
+.PHONY: docker-tar
+docker-tar:
+	docker buildx build ${IMAGE_PLATFORM} -o - . > images.tar
