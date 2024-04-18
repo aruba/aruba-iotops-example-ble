@@ -2,37 +2,38 @@ pipeline {
     agent {label 'mp-vm'}
 
     stages {
-        stage('Step 1: Docker Build Image') {
+        stage('Step 1: Download Git repo') {
+          when {
+              expression {
+                image_upload_required.toBoolean() || icon_upload_required.toBoolean() || lua_upload_required.toBoolean()
+              }
+          }
             steps {
-                sh '''
+              sh '''
 rm -Rf aruba-iotops-example-ble
 
 git clone --depth 1 --single-branch -b main ${github_repo}
+                '''
+            }
+        }
 
+        stage('Step 2: Build App image and Update ADP App Image') {
+          when {
+            expression {
+              image_upload_required.toBoolean()
+            }
+          }
+            steps {
+                sh '''
 eval ${build_command}
-                '''
-            }
-        }
-        stage('Step 2: Save Docker Image') {
-            steps {
-                sh '''
+
 docker save ${gitimagename}:${gitimageversion} > ${imagename}.tar
-                '''
-            }
-        }
-        stage('Step 3: Retrieve ADP image') {
-            steps {
-                sh '''
+
 eval "curl '${url}/iot_operations/api/v1/adp/images/maxversion?pageNumber=1&pageSize=1000' \
     -H 'authorization: Bearer ${token}' -o maxversion.json"
 
 cat maxversion.json
-                '''
-            }
-        }
-        stage('Step 4: Upload Image to ADP') {
-            steps {
-                sh '''
+
 md5val=$(md5sum ${imagename}.tar | awk '{print $1}')
 version=$(jq '.content | .[] | select (.name == "'${imagename}'")'.version+1 maxversion.json)
 
@@ -62,46 +63,71 @@ cat response.sh
 cat response_second.json
 
 sleep ${timeout}
+pwd
+
+app_container_uuid=$(jq .container_image_uuid ${app_bundle_path})
+echo "UUID for app: $app_container_uuid"
+
+img_container_uuid=$(jq .uuid imageupload.json | tr -d '"')
+echo "UUID for new image: $img_container_uuid"
+
+#sed -i 's/"container_image_uuid":${app_container_uuid}/"container_image_uuid":${img_container_uuid}/g' ${app_bundle_path}
+#eval $(sed -i 's/"container_image_uuid":'${app_container_uuid}'/"container_image_uuid":'${img_container_uuid}'/g' ${app_bundle_path})
+eval $(jq '.container_image_uuid="'${img_container_uuid}'"' ${app_bundle_path} > app_v1.json)
+cp app_v1.json ${app_bundle_path}
+
+app_container_uuid=$(jq .container_image_uuid ${app_bundle_path})
+echo "UUID for app: $app_container_uuid"
                 '''
             }
         }
-        stage('Step 5: Retrieve ADP app for updation') {
+
+        stage('Step 3: Update ADP App icon') {
+          when {
+            expression {
+              icon_upload_required.toBoolean()
+            }
+          }
             steps {
                 sh '''
-eval "curl '${url}/iot_operations/api/v1/adp/apps/${appid}/versions?pageNumber=1&pageSize=1000' \
--H 'authorization: Bearer ${token}' -o appversion.json"
-
-version=$(jq '.content | .[] | select (.status == "DRAFT")'.version appversion.json)
-
-eval "curl '${url}/iot_operations/api/v1/adp/apps/${appid}/details?version=${version}' \
-  -H 'authorization: Bearer ${token}' \
-  -o app.json"
-
-cat app.json
+if [ ! -d ${app_icon_path} ]; then
+    app_icon=$(base64 -w 0 ${app_icon_path})
+    eval $(jq '.icon.url=null | .icon.data="'${app_icon}'"' ${app_bundle_path} > app_v2.json)
+    cp app_v2.json ${app_bundle_path}
+fi
                 '''
             }
         }
-        stage('Step 6: Update app to ADP for updated image and lua script') {
+
+        stage('Step 4: Update ADP App lua script') {
+          when {
+            expression {
+              lua_upload_required.toBoolean()
+            }
+          }
             steps {
                 sh '''
-app_container_uuid=$(jq .container_image_uuid app.json)
-echo "UUID for app: $app_container_uuid"
-
-img_container_uuid=$(jq .uuid imageupload.json)
-echo "UUID for test image: $img_container_uuid"
-
-prefix="'"
-
-sed -i 's/"container_image_uuid":${app_container_uuid}/"container_image_uuid":${img_container_uuid}/g' app.json
-eval $(sed -i 's/"container_image_uuid":'${app_container_uuid}'/"container_image_uuid":'${img_container_uuid}'/g' app.json)
-
-app_container_uuid=$(jq .container_image_uuid app.json)
-echo "UUID for app: $app_container_uuid"
-
 if [ ! -d ${lua_file_path} ]; then
     lua_base=$(base64 -w 0 ${lua_file_path})
-    eval $(jq '.lua_script.file_id=null | .lua_script.data="'${lua_base}'"' app.json > app_v1.json)
+    eval $(jq '.lua_script.file_id=null | .lua_script.data="'${lua_base}'"' ${app_bundle_path} > app_v3.json)
+    cp app_v3.json ${app_bundle_path}
 fi
+                '''
+            }
+        }
+
+        stage('Step 5: Update ADP App') {
+          when {
+              expression {
+                image_upload_required.toBoolean() || icon_upload_required.toBoolean() || lua_upload_required.toBoolean()
+              }
+          }
+            steps {
+                sh '''
+prefix="'"
+
+eval "curl '${url}/iot_operations/api/v1/adp/apps/${appid}/versions?pageNumber=1&pageSize=1000' \
+-H 'authorization: Bearer ${token}' -o appversion.json"
 
 version=$(jq '.content | .[] | select (.status == "DRAFT")'.version appversion.json)
 
@@ -110,13 +136,13 @@ eval "curl '${url}/iot_operations/api/v1/adp/apps/draft/${appid}/version/${versi
   -H 'authorization: Bearer ${token}' \
   -H 'content-type: application/json' \
   -H 'referer: ${url}/swagger/central/' \
-  --data-raw ${prefix}$(cat app_v1.json)${prefix} \
+  --data-raw ${prefix}$(cat $app_bundle_path)${prefix} \
   -o appupdate.json" > response.sh
 
 cat appupdate.json
-
                 '''
             }
+          
         }
     }
 }

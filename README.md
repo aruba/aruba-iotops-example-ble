@@ -20,7 +20,8 @@ Contents
   * [AppBundle Configuration](#appbundle-configuration)
   * [Installation](#installation)
   * [Data Display](#data-display)
-* [Jenkins CICD pipeline](#jenkins-cicd-pipeline)
+*  [Jenkins CICD pipeline for App Download](#jenkins-cicd-pipeline-for-app-download)
+* [Jenkins CICD pipeline for App Updation](#jenkins-cicd-pipeline-for-app-updation)
 * [License](#license)
 
 ## Topology
@@ -36,6 +37,7 @@ aruba-iotops-example-ble
     |-- lua
     |-- resource
     |-- Jenkinsfile
+    |-- Jenkinsfile-AppBundle
     |-- README.md
     |-- VERSION
     |-- LICENSE
@@ -154,11 +156,44 @@ On this web page, we will have the following operate step:
 2. on Subscriptions part, click "Add New Topic Subscription" button, then it will pop up a window, you should type your own public topic name into Topic field, then click "Subscribe" button. The topic name is set when the app is installed. If you haven't set this topic, we also have default value: "app2broker_topic".
 3. on the "Messages" part, you will see the data from your app.
 
-## Jenkins CICD pipeline
+## Jenkins CICD pipeline for App Download
 Pre requisite for Node on which jenkins pipeline is executed.
 1. Installables required for jenkins pipeline
-  * jq, curl git, docker, bash
-1. Installables required for example app git repo for docker build
+  * curl, git, bash
+
+Create a new Jenkins pipeline with below mentioned parameters and use the jenkins script available in Jenkinsfile-AppBundle file.
+
+Parameters:
+1. url
+- type: String
+- example: https://pavan257-cl-hybrid-arm-578-0-api.lite.arubadev.cloud.hpe.com
+- description: Central URL required for NBAPI call. It can be obtained from Central NBAPI page
+2. token
+ - type: String
+- example: WjxstwgRaPVOgyhy1JT64o8Mi031WhA7
+- description: Central token required for NBAPI authorization. It can be obtained from Central NBAPI My Apps and token page
+3. appid
+- type: String
+- example: 659bbda98db7a017ddd9147a
+- description: ADP application id to be updated. It can be obtained from ADP app version page- it is available in url
+4. appVersion
+- type: String
+- example: 1
+- description: ADP application version which needs to be downloaded.
+5. github_repo
+- type: String
+- example: https://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@github.com/aruba/aruba-iotops-example-ble
+- description: Git repo url detail, where updated json can be pushed
+6. app_bundle_path
+- type: String
+- example: aruba-iotops-example-ble/resource/appbundle/appbundle.json
+- description: App bundle path where downloaded app data can be uploaded
+
+## Jenkins CICD pipeline for App Updation
+Pre requisite for Node on which jenkins pipeline is executed.
+1. Installables required for jenkins pipeline
+  * jq, curl, git, docker, bash
+2. Installables required for example app git repo for docker build
   * golang, make
 
 Create a new Jenkins pipeline with below mentioned parameters and use the jenkins script available in Jenkinsfile file.
@@ -176,36 +211,61 @@ Parameters:
 - type: String
 - example: 659bbda98db7a017ddd9147a
 - description: ADP application id to be updated. It can be obtained from ADP app version page- it is available in url
-4. imagename
-- type: String
--  example: ExampleApp
-- description: Image name which should be used while uploading container image to ADP
-5. github_repo
+4. github_repo
 - type: String
 - example: https://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@github.com/aruba/aruba-iotops-example-ble
 - description: Git repo url detail
-6. build_command
+5. app_bundle_path
 - type: String
-- example: cd aruba-iotops-example-ble/container/ &&  make docker
-- description: Build command required for container image build
-7. gitimagename
+- example: aruba-iotops-example-ble/resource/appbundle/appbundle.json
+- description: App bundle path from where app information can be used which can be used while updating ADP app
+6. icon_upload_required
+- type: Boolean
+- description: Select the checkbox if icon upload is required for ADP app.
+7. app_icon_path
 - type: String
-- example: aruba-iotops-example-ble
-- description: image name generated from git container image build
-8. gitimageversion
-- type: String
-- example: 1.0.0-release
-- description: Image version generated from git container image build
+- example: aruba-iotops-example-ble/resource/icon/sample.jpeg
+- description: App icon path from where app information can be used which can be used while updating ADP app icon
+8. lua_upload_required
+- type: Boolean
+- description: Select the checkbox if lua file upload is required for ADP app.
 9. lua_file_path
 - type: String
 - example: aruba-iotops-example-ble/lua/ibeacon.lua
+- description: App lua file path from where app information can be used which can be used while updating ADP app lua content
+10. image_upload_required
+- type: Boolean
+- description: Select the checkbox if container image upload is required for ADP app.
+11. imagename
+- type: String
+-  example: ExampleApp
+- description: Image name which should be used while uploading container image to ADP
+12. build_command
+- type: String
+- example: cd aruba-iotops-example-ble/container/ &&  make docker
+- description: Build command required for container image build
+13. gitimagename
+- type: String
+- example: aruba-iotops-example-ble
+- description: image name generated from git container image build
+14. gitimageversion
+- type: String
+- example: 1.0.0-release
+- description: Image version generated from git container image build
+15. lua_file_path
+- type: String
+- example: aruba-iotops-example-ble/lua/ibeacon.lua
 - description: Lua file path inside git repo
-10. timeout
+16. timeout
 - type: String
 - example: 120
 - description: Wait time in seconds required during image upload. It should be configred based on image size (expected time for image upload to be completed in image repository)
 
-Jenkins pipeline uses git details and build docker image, which gets saved as tar file and md5 is also generated on tar for verification purpose.
+Jenkins pipeline can be used for updating app icon, lua file and/or container image deplending on the options used during app execution.
+
+It converts icon and lua file content into base64 and app information gets updated for icon and lua content.
+
+Similarly pipeline uses git details and build docker image, which gets saved as tar file and md5 is also generated on tar for verification purpose.
 
 Image version details retrieved from ADP and is incremented by 1 and image upload to ADP gets triggered.
 Once image is uploaded, pipeline waits for configured time.

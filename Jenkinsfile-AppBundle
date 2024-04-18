@@ -1,0 +1,32 @@
+pipeline {
+    agent {label 'mp-vm'}
+
+    stages {
+        stage('Download App Bundle') {
+            steps {
+                sh '''
+eval "curl '${url}/iot_operations/api/v1/adp/apps/${appid}/details?version=${appVersion}' \
+  -H 'authorization: Bearer ${token}' \
+  -o appbundle.json"
+
+cat appbundle.json
+                '''
+            }
+        }
+        stage('Push app bundle to git repo local branch') {
+            steps {
+                sh '''
+rm -Rf aruba-iotops-example-ble
+git clone --depth 1 --single-branch -b main ${github_repo}
+
+cd aruba-iotops-example-ble
+mkdir -p ${app_bundle_path}
+cp ../appbundle.json ${app_bundle_path}
+git add .
+git commit -m "AppBundle update"
+git push origin
+                '''
+            }
+        }
+    }
+}
