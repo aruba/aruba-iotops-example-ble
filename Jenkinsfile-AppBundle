@@ -10,18 +10,19 @@ eval "curl '${url}/iot_operations/api/v1/adp/apps/${appid}/details?version=${app
   -o appbundle.json"
 
 cat appbundle.json
+
                 '''
             }
         }
         stage('Push app bundle to git repo local branch') {
             steps {
                 sh '''
-rm -Rf aruba-iotops-example-ble
-git clone --depth 1 --single-branch -b main ${github_repo}
+rm -Rf ${project_name}
+git clone --depth 1 --single-branch -b ${github_local_branch} ${github_repo}
 
-cd aruba-iotops-example-ble
-mkdir -p ${app_bundle_path}
-cp ../appbundle.json ${app_bundle_path}
+cd ${project_name}
+mkdir -p ./resource/appbundle/
+cp ../appbundle.json ./resource/appbundle/
 git add .
 git commit -m "AppBundle update"
 git push origin

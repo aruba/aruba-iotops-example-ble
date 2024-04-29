@@ -184,10 +184,16 @@ Parameters:
 - type: String
 - example: https://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@github.com/aruba/aruba-iotops-example-ble
 - description: Git repo url detail, where updated json can be pushed
-6. app_bundle_path
+6. github_local_branch
 - type: String
-- example: aruba-iotops-example-ble/resource/appbundle/appbundle.json
-- description: App bundle path where downloaded app data can be uploaded
+- example: main
+- description: Git branch which should be used for pull and push for app bundle update
+7. project_name
+- type: String
+- example: aruba-iotops-example-ble
+- description: Git project name which is cloned from github repo
+
+Jenkins pipeline can be used for downloading the app data from ADP to the local. It also create a commit for the same and push it back to the git repository in configured branch.
 
 ## Jenkins CICD pipeline for App Updation
 Pre requisite for Node on which jenkins pipeline is executed.
@@ -215,53 +221,33 @@ Parameters:
 - type: String
 - example: https://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@github.com/aruba/aruba-iotops-example-ble
 - description: Git repo url detail
-5. app_bundle_path
+5. github_local_branch
 - type: String
-- example: aruba-iotops-example-ble/resource/appbundle/appbundle.json
-- description: App bundle path from where app information can be used which can be used while updating ADP app
-6. icon_upload_required
+- example: main
+- description: Git branch which should be used for pull and push for app bundle update
+6. project_name
+- type: String
+- example: aruba-iotops-example-ble
+- description: Git project name which is cloned from github repo
+7. lua_upload_required
 - type: Boolean
-- description: Select the checkbox if icon upload is required for ADP app.
-7. app_icon_path
-- type: String
-- example: aruba-iotops-example-ble/resource/icon/sample.jpeg
-- description: App icon path from where app information can be used which can be used while updating ADP app icon
-8. lua_upload_required
+- description: Select the checkbox if lua file update is required for ADP app.
+8. icon_upload_required
 - type: Boolean
-- description: Select the checkbox if lua file upload is required for ADP app.
-9. lua_file_path
-- type: String
-- example: aruba-iotops-example-ble/lua/ibeacon.lua
-- description: App lua file path from where app information can be used which can be used while updating ADP app lua content
-10. image_upload_required
+- description: Select the checkbox if app icon update is required for ADP app.
+9. image_upload_required
 - type: Boolean
 - description: Select the checkbox if container image upload is required for ADP app.
-11. imagename
+10. imagename
 - type: String
 -  example: ExampleApp
 - description: Image name which should be used while uploading container image to ADP
-12. build_command
-- type: String
-- example: cd aruba-iotops-example-ble/container/ &&  make docker
-- description: Build command required for container image build
-13. gitimagename
-- type: String
-- example: aruba-iotops-example-ble
-- description: image name generated from git container image build
-14. gitimageversion
-- type: String
-- example: 1.0.0-release
-- description: Image version generated from git container image build
-15. lua_file_path
-- type: String
-- example: aruba-iotops-example-ble/lua/ibeacon.lua
-- description: Lua file path inside git repo
-16. timeout
+11. timeout
 - type: String
 - example: 120
 - description: Wait time in seconds required during image upload. It should be configred based on image size (expected time for image upload to be completed in image repository)
 
-Jenkins pipeline can be used for updating app icon, lua file and/or container image deplending on the options used during app execution.
+Jenkins pipeline can be used for updating app icon, lua file and/or container image depending on the options used during job execution.
 
 It converts icon and lua file content into base64 and app information gets updated for icon and lua content.
 
