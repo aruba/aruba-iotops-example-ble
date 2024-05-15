@@ -1,0 +1,90 @@
+{
+    "app_id": "6620bbeb7ff5a91c241db44b",
+    "version": 1,
+    "is_live": false,
+    "is_last_version": true,
+    "status": "DRAFT",
+    "created_by": "mayuri.pawar@hpe.com",
+    "modified_by": "",
+    "name": "ExampleApp",
+    "icon": {
+        "name": "sample2.jpg",
+        "data": "",
+        "url": "//d8p1x3h4xd5gq.cloudfront.net/5e79096d64aa49631f901003/public/66442407c0a9ff60809b890f.jpg"
+    },
+    "summary": "ExampleApp",
+    "description": "<p>ExampleApp</p>",
+    "release_notes": "",
+    "author_website": "http://hpesupport.com",
+    "platform_url": "",
+    "app_support": "http://hpesupport.com",
+    "privacy_policy_url": "",
+    "license_agreement_url": "",
+    "categories": [
+        {
+            "id": "iBeacon",
+            "name": "iBeacon"
+        }
+    ],
+    "supported_platforms": [
+        "DATA_COLLECTOR"
+    ],
+    "minimum_sdk_version": "1",
+    "installation_instructions": "",
+    "platform_dependencies": "",
+    "app_features": [
+        "feature_ble",
+        "feature_edge_compute"
+    ],
+    "feature_ble": true,
+    "feature_zigbee": false,
+    "feature_usb": false,
+    "feature_edge_compute": true,
+    "lua_script": {
+        "name": "fef285fc-2248-45de-88fa-cb786b54aee3.lua",
+        "data": "X1ZFUlNJT049MQ==",
+        "file_id": "5e79096d64aa49631f901003/private/664424078ad0b74be2af8e03.lua"
+    },
+    "lua_subscription_list": [
+        {
+            "match_type": "DEVICE_CLASS",
+            "match_value": "iBeacon"
+        }
+    ],
+    "zigbee_config": [],
+    "container_image_uuid": "",
+    "container_ap_image_uuid": "",
+    "container_cpu_ap": "",
+    "container_cpu_mini_dc": "",
+    "container_cpu_small_dc": "",
+    "container_cpu_medium_dc": "",
+    "container_mem_ap": "",
+    "container_mem_mini_dc": "",
+    "container_mem_small_dc": "",
+    "container_mem_medium_dc": "",
+    "container_persistent_volume": "",
+    "container_subscription_list": [],
+    "allowed_external_urls": [],
+    "required_user_permission": false,
+    "required_user_subscription": false,
+    "required_user_outbound_firewall_permission": false,
+    "required_user_ca_certificates": false,
+    "container_required_environment_variables": [],
+    "app_ap_permission": "BLOCK",
+    "app_radio_permission": "BLOCK",
+    "app_beacon_permission": "BLOCK",
+    "usb_config": [],
+    "app_device_class_permissions": [
+        {
+            "device_class": "iBeacon",
+            "ble_script_access": "READ_WRITE",
+            "zigbee_access": "BLOCK",
+            "serial_access": "BLOCK",
+            "device_context_access": "BLOCK",
+            "ble_gatt_operations": "BLOCK"
+        }
+    ],
+    "app_allowed_device_class_classification": [
+        "iBeacon"
+    ]
+}
