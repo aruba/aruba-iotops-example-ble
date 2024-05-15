@@ -1,5 +1,3 @@
-cd ${project_name}
-
 cd container/ &&  make docker && cd ..
 
 docker save aruba-iotops-example-ble:1.0.0-release > ${imagename}.tar

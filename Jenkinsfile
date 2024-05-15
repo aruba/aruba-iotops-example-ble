@@ -1,56 +1,51 @@
 pipeline {
-    agent {label 'mp-vm'}
+    agent any
+    parameters {
+      string(name: 'url', description: 'Central URL')
+      string(name: 'token', description: 'Central NBAPI token')
+      string(name: 'appid', description: 'ADP application id')
+      booleanParam(name: 'icon_upload_required', description: 'Select the checkbox if app icon update is required for ADP app')
+      booleanParam(name: 'lua_upload_required', description: 'Select the checkbox if lua file update is required for ADP app')
+      booleanParam(name: 'image_upload_required', description: 'Select the checkbox if container image upload is required for ADP app')
+      string(name: 'imagename', defaultValue: 'ExampleApp', description: 'Image name to be uploaded')
+      string(name: 'timeout', defaultValue: '120', description: 'Wait time in seconds required during image upload')
+    }
 
     stages {
-        stage('Step 1: Download Git repo') {
-          when {
-              expression {
-                image_upload_required.toBoolean() || icon_upload_required.toBoolean() || lua_upload_required.toBoolean()
-              }
-          }
-            steps {
-              sh '''
-rm -Rf ${project_name}
-
-git clone --depth 1 --single-branch -b ${github_local_branch} ${github_repo}
-                '''
-            }
-        }
-
-        stage('Step 2: Build App image and Update ADP App Image') {
+        stage('Step 1: Build App image and Update ADP App Image') {
           when {
             expression {
               image_upload_required.toBoolean()
             }
           }
             steps {
-                sh './${project_name}/resource/scripts/update_containerimage.sh'
+                sh './resource/scripts/update_containerimage.sh'
             }
         }
 
-        stage('Step 3: Update ADP App icon') {
+        stage('Step 2: Update ADP App icon') {
           when {
             expression {
               icon_upload_required.toBoolean()
             }
           }
             steps {
-                sh './${project_name}/resource/scripts/update_icon.sh'
+                sh './resource/scripts/update_icon.sh'
             }
         }
 
-        stage('Step 4: Update ADP App lua script') {
+        stage('Step 3: Update ADP App lua script') {
           when {
             expression {
               lua_upload_required.toBoolean()
             }
           }
             steps {
-                sh './${project_name}/resource/scripts/update_appbundle.sh'
+                sh './resource/scripts/update_containerimage.sh'
             }
         }
 
-        stage('Step 5: Update ADP App') {
+        stage('Step 4: Update ADP App') {
           when {
               expression {
                 image_upload_required.toBoolean() || icon_upload_required.toBoolean() || lua_upload_required.toBoolean()
@@ -58,7 +53,6 @@ git clone --depth 1 --single-branch -b ${github_local_branch} ${github_repo}
           }
             steps {
                 sh '''
-cd ${project_name}
 cat resource/appbundle/appbundle.json
 prefix="'"
 

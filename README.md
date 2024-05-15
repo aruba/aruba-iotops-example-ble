@@ -20,7 +20,6 @@ Contents
   * [AppBundle Configuration](#appbundle-configuration)
   * [Installation](#installation)
   * [Data Display](#data-display)
-*  [Jenkins CICD pipeline for App Download](#jenkins-cicd-pipeline-for-app-download)
 * [Jenkins CICD pipeline for App Updation](#jenkins-cicd-pipeline-for-app-updation)
 * [License](#license)
 
@@ -37,7 +36,6 @@ aruba-iotops-example-ble
     |-- lua
     |-- resource
     |-- Jenkinsfile
-    |-- Jenkinsfile-AppBundle
     |-- README.md
     |-- VERSION
     |-- LICENSE
@@ -156,51 +154,12 @@ On this web page, we will have the following operate step:
 2. on Subscriptions part, click "Add New Topic Subscription" button, then it will pop up a window, you should type your own public topic name into Topic field, then click "Subscribe" button. The topic name is set when the app is installed. If you haven't set this topic, we also have default value: "app2broker_topic".
 3. on the "Messages" part, you will see the data from your app.
 
-## Jenkins CICD pipeline for App Download
-Pre requisite for Node on which jenkins pipeline is executed.
-1. Installables required for jenkins pipeline
-  * curl, git, bash
-
-Create a new Jenkins pipeline with below mentioned parameters and use the jenkins script available in Jenkinsfile-AppBundle file.
-
-Parameters:
-1. url
-- type: String
-- example: https://pavan257-cl-hybrid-arm-578-0-api.lite.arubadev.cloud.hpe.com
-- description: Central URL required for NBAPI call. It can be obtained from Central NBAPI page
-2. token
- - type: String
-- example: WjxstwgRaPVOgyhy1JT64o8Mi031WhA7
-- description: Central token required for NBAPI authorization. It can be obtained from Central NBAPI My Apps and token page
-3. appid
-- type: String
-- example: 659bbda98db7a017ddd9147a
-- description: ADP application id to be updated. It can be obtained from ADP app version page- it is available in url
-4. appVersion
-- type: String
-- example: 1
-- description: ADP application version which needs to be downloaded.
-5. github_repo
-- type: String
-- example: https://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@github.com/aruba/aruba-iotops-example-ble
-- description: Git repo url detail, where updated json can be pushed
-6. github_local_branch
-- type: String
-- example: main
-- description: Git branch which should be used for pull and push for app bundle update
-7. project_name
-- type: String
-- example: aruba-iotops-example-ble
-- description: Git project name which is cloned from github repo
-
-Jenkins pipeline can be used for downloading the app data from ADP to the local. It also create a commit for the same and push it back to the git repository in configured branch.
-
 ## Jenkins CICD pipeline for App Updation
 Pre requisite for Node on which jenkins pipeline is executed.
-1. Installables required for jenkins pipeline
-  * jq, curl, git, docker, bash
-2. Installables required for example app git repo for docker build
-  * golang, make
+1. Installables required for jenkins pipeline/node
+  * jq, curl, docker, bash, golang, make
+3. appbundle.json
+  * This is the app json which can be downloaded via ADP NBAPI Get App Version Details (/v1/adp/apps/{app_id}/details)
 
 Create a new Jenkins pipeline with below mentioned parameters and use the jenkins script available in Jenkinsfile file.
 
@@ -217,32 +176,20 @@ Parameters:
 - type: String
 - example: 659bbda98db7a017ddd9147a
 - description: ADP application id to be updated. It can be obtained from ADP app version page- it is available in url
-4. github_repo
-- type: String
-- example: https://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@github.com/aruba/aruba-iotops-example-ble
-- description: Git repo url detail
-5. github_local_branch
-- type: String
-- example: main
-- description: Git branch which should be used for pull and push for app bundle update
-6. project_name
-- type: String
-- example: aruba-iotops-example-ble
-- description: Git project name which is cloned from github repo
-7. lua_upload_required
+4. lua_upload_required
 - type: Boolean
 - description: Select the checkbox if lua file update is required for ADP app.
-8. icon_upload_required
+5. icon_upload_required
 - type: Boolean
 - description: Select the checkbox if app icon update is required for ADP app.
-9. image_upload_required
+6. image_upload_required
 - type: Boolean
 - description: Select the checkbox if container image upload is required for ADP app.
-10. imagename
+7. imagename
 - type: String
 -  example: ExampleApp
 - description: Image name which should be used while uploading container image to ADP
-11. timeout
+8. timeout
 - type: String
 - example: 120
 - description: Wait time in seconds required during image upload. It should be configred based on image size (expected time for image upload to be completed in image repository)
