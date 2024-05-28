@@ -20,7 +20,7 @@ Contents
   * [AppBundle Configuration](#appbundle-configuration)
   * [Installation](#installation)
   * [Data Display](#data-display)
-* [Jenkins CICD pipeline](#jenkins-cicd-pipeline)
+* [Jenkins CICD pipeline for App Updation](#jenkins-cicd-pipeline-for-app-updation)
 * [License](#license)
 
 ## Topology
@@ -154,12 +154,12 @@ On this web page, we will have the following operate step:
 2. on Subscriptions part, click "Add New Topic Subscription" button, then it will pop up a window, you should type your own public topic name into Topic field, then click "Subscribe" button. The topic name is set when the app is installed. If you haven't set this topic, we also have default value: "app2broker_topic".
 3. on the "Messages" part, you will see the data from your app.
 
-## Jenkins CICD pipeline
+## Jenkins CICD pipeline for App Updation
 Pre requisite for Node on which jenkins pipeline is executed.
-1. Installables required for jenkins pipeline
-  * jq, curl git, docker, bash
-1. Installables required for example app git repo for docker build
-  * golang, make
+1. Installables required for jenkins pipeline/node
+  * jq, curl, docker, bash, golang, make
+3. appbundle.json
+  * This is the app json which can be downloaded via ADP NBAPI Get App Version Details (/v1/adp/apps/{app_id}/details)
 
 Create a new Jenkins pipeline with below mentioned parameters and use the jenkins script available in Jenkinsfile file.
 
@@ -176,36 +176,29 @@ Parameters:
 - type: String
 - example: 659bbda98db7a017ddd9147a
 - description: ADP application id to be updated. It can be obtained from ADP app version page- it is available in url
-4. imagename
+4. lua_upload_required
+- type: Boolean
+- description: Select the checkbox if lua file update is required for ADP app.
+5. icon_upload_required
+- type: Boolean
+- description: Select the checkbox if app icon update is required for ADP app.
+6. image_upload_required
+- type: Boolean
+- description: Select the checkbox if container image upload is required for ADP app.
+7. imagename
 - type: String
 -  example: ExampleApp
 - description: Image name which should be used while uploading container image to ADP
-5. github_repo
-- type: String
-- example: https://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@github.com/aruba/aruba-iotops-example-ble
-- description: Git repo url detail
-6. build_command
-- type: String
-- example: cd aruba-iotops-example-ble/container/ &&  make docker
-- description: Build command required for container image build
-7. gitimagename
-- type: String
-- example: aruba-iotops-example-ble
-- description: image name generated from git container image build
-8. gitimageversion
-- type: String
-- example: 1.0.0-release
-- description: Image version generated from git container image build
-9. lua_file_path
-- type: String
-- example: aruba-iotops-example-ble/lua/ibeacon.lua
-- description: Lua file path inside git repo
-10. timeout
+8. timeout
 - type: String
 - example: 120
 - description: Wait time in seconds required during image upload. It should be configred based on image size (expected time for image upload to be completed in image repository)
 
-Jenkins pipeline uses git details and build docker image, which gets saved as tar file and md5 is also generated on tar for verification purpose.
+Jenkins pipeline can be used for updating app icon, lua file and/or container image depending on the options used during job execution.
+
+It converts icon and lua file content into base64 and app information gets updated for icon and lua content.
+
+Similarly pipeline uses git details and build docker image, which gets saved as tar file and md5 is also generated on tar for verification purpose.
 
 Image version details retrieved from ADP and is incremented by 1 and image upload to ADP gets triggered.
 Once image is uploaded, pipeline waits for configured time.

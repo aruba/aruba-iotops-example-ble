@@ -1,0 +1,1 @@
+Add app icon file (appicon.jpg) here manually. This icon will be used to update the image icon.
