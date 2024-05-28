@@ -1,5 +1,6 @@
 #Configure your docker image name with registry url
 DOCKER_IMG=aruba-iotops-example-ble:$(shell head ../VERSION)
+imagename?=images
 
 .PHONY: build
 build:
@@ -20,6 +21,6 @@ publish-docker:
 	docker buildx build ${IMAGE_PLATFORM} --push -t $(DOCKER_IMG) .
 
 #Build a tar to upload in Aruba Developer Portal
-.PHONY: docker-tar
-docker-tar:
-	docker buildx build ${IMAGE_PLATFORM} -o - . > images.tar
+.PHONY: image-tar
+image-tar:
+	docker buildx build ${IMAGE_PLATFORM} -o type=oci,dest=$(imagename).tar .
