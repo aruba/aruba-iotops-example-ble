@@ -1,6 +1,4 @@
-cd container/ &&  make docker && cd ..
-
-docker save aruba-iotops-example-ble:1.0.0-release > ${imagename}.tar
+cd container/ &&  make image-tar && cd ..
 
 eval "curl '${url}/iot_operations/api/v1/adp/images/maxversion?pageNumber=1&pageSize=1000' \
     -H 'authorization: Bearer ${token}' -o maxversion.json"
