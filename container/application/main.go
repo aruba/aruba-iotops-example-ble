@@ -45,7 +45,7 @@ func main() {
 	mqttClient.Connect()
 
 	// bleAPIURL: example app will get data from HPE IoT Operations infrastructure services through this API url
-	bleAPIURL := "http://" + apiGwURL + "/api/v2/ble/stream/packets"
+	bleAPIURL := "http://" + apiGwURL + "/api/v3/ble/stream/packets"
 	httpClient := NewHTTPClient(bleAPIURL, apiKey, http.MethodGet)
 	httpClient.Connect(context.Background())
 
@@ -54,12 +54,21 @@ func main() {
 
 const minBleDataLen = 30
 
+type IBeaconData struct {
+	DeviceClass string
+	UUID        string
+	Major       string
+	Minor       string
+	Power       string
+}
+
 // ProcessBleData get data from HPE IoT Operations infrastructure service.
 // then decode and decorate and put data into data channel,
 // data channel will be consumed by MQTT client.
 func ProcessBleData(httpDataCh <-chan *BleData, mqttDataCh chan<- string) {
 	for bleData := range httpDataCh {
-		if len(bleData.Data) < minBleDataLen {
+		payload := bleData.Result.Payload
+		if len(payload) < minBleDataLen {
 			continue
 		}
 
@@ -69,10 +78,10 @@ func ProcessBleData(httpDataCh <-chan *BleData, mqttDataCh chan<- string) {
 		// If you want to get string data. please process it with method hex.EncodeToString([]byte)
 		iBeaconData := &IBeaconData{
 			DeviceClass: "iBeacon",
-			UUID:        hex.EncodeToString(bleData.Data[9:25]),
-			Major:       hex.EncodeToString(bleData.Data[25:27]),
-			Minor:       hex.EncodeToString(bleData.Data[27:29]),
-			Power:       hex.EncodeToString(bleData.Data[29:30]),
+			UUID:        hex.EncodeToString(payload[9:25]),
+			Major:       hex.EncodeToString(payload[25:27]),
+			Minor:       hex.EncodeToString(payload[27:29]),
+			Power:       hex.EncodeToString(payload[29:30]),
 		}
 		iBeacon, _ := json.Marshal(iBeaconData)
 

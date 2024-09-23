@@ -15,6 +15,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -26,71 +27,48 @@ import (
 	"time"
 )
 
+const iBeaconRawHex = "0201041AFF4C000215F7826DA64FA24E988024BC5B71E0893E00000000C5"
+
 func TestExampleApp(t *testing.T) {
-	t.Parallel()
+	server := SEServerMock()
 
-	tests := []struct {
-		name string
-	}{
-		{name: "SE request"},
-	}
+	// http client
+	log.Println("Request Ble data and transfer it to a third party server")
 
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+	BleRequestURL := server.URL + "/api/v3/ble/stream/packets"
+	httpClient := NewHTTPClient(BleRequestURL, "", http.MethodGet)
+	httpClient.Connect(context.Background())
 
-			server := SEServerMock()
+	mqttDataCh := make(chan string, 1)
 
-			// http client
-			log.Println("Request Ble data and transfer it to a third party server")
+	// bleClient process ble data
+	go ProcessBleData(httpClient.GetDataCh(), mqttDataCh)
 
-			BleRequestURL := server.URL + "/api/v2/ble/stream/packets"
-			httpClient := NewHTTPClient(BleRequestURL, "", http.MethodGet)
-			httpClient.Connect(context.Background())
+	iBeaconData := &IBeaconData{}
 
-			mqttDataCh := make(chan string, 1)
+	go func() {
+		result := <-mqttDataCh
+		_ = json.Unmarshal([]byte(result), iBeaconData)
+	}()
 
-			// bleClient process ble data
-			go ProcessBleData(httpClient.GetDataCh(), mqttDataCh)
+	<-time.After(20 * time.Millisecond)
 
-			iBeaconData := &IBeaconData{}
-
-			go func() {
-				result := <-mqttDataCh
-				_ = json.Unmarshal([]byte(result), iBeaconData)
-			}()
-
-			<-time.After(20 * time.Millisecond)
-
-			if strings.ToUpper(iBeaconData.UUID) != "F7826DA64FA24E988024BC5B71E0893E" {
-				t.Error("Get iBeacon data failed")
-			}
-		})
+	if strings.ToUpper(iBeaconData.UUID) != iBeaconRawHex[18:50] {
+		t.Error("Get iBeacon data failed")
 	}
 }
 
 func SEServerMock() *httptest.Server {
 	log.Println("start HTTP server. send Ble data to client.")
 	// mock data
-	var frameType BleFrameType = 3
+	bleDataMock, _ := hex.DecodeString(iBeaconRawHex)
+	payload := base64.StdEncoding.EncodeToString(bleDataMock)
 
-	bleDataMock, _ := hex.DecodeString("0201041AFF4C000215F7826DA64FA24E988024BC5B71E0893E00000000C5")
-
-	// ble structure: 0201041AFF 4C00 02 15 4152554EF94A3B869470706978210A00(UUID) 0000(Major) 0000(Minor) C8(power)
-	bleData := &BleData{
-		Mac:       "50:31:ad:02:5c:93",
-		Data:      bleDataMock,
-		Rssi:      -57,
-		FrameType: &frameType,
-		ApMac:     "11:22:33:44:55:66",
-	}
-	bleDataJSON, _ := json.Marshal(bleData)
-	testData := "data:" + string(bleDataJSON) + "\n"
+	testData := fmt.Sprintf(`{"result":{"mac":"dc:a6:32:3f:1f:33","apMac":"ff:ff:2c:5d:94:9f","payload":"%s","rssi":-46,"frameType":"BLE_FRAME_TYPE_ADV_IND","radioMac":"ff:11:df:f5:ba:b1","macAddressType":"BLE_MAC_ADDRESS_TYPE_PUBLIC"}}`, payload)
 
 	// HTTP server
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if request.URL.EscapedPath() != "/api/v2/ble/stream/packets" {
+		if request.URL.EscapedPath() != "/api/v3/ble/stream/packets" {
 			_, _ = fmt.Fprintf(writer, "Reqeust path error")
 		}
 		if request.Method != http.MethodGet {
@@ -99,7 +77,7 @@ func SEServerMock() *httptest.Server {
 
 		flusher, _ := writer.(http.Flusher)
 
-		_, _ = fmt.Fprint(writer, testData)
+		writer.Write(append([]byte(testData), []byte("\n")...))
 		flusher.Flush()
 
 		time.Sleep(1 * time.Second)

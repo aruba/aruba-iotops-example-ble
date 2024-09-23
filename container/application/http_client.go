@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -70,7 +69,7 @@ func (c *HTTPClient) Connect(ctx context.Context) {
 		return
 	}
 
-	reader := bufio.NewReader(resp.Body)
+	scanner := bufio.NewScanner(resp.Body)
 
 	go func() {
 		defer func() {
@@ -79,32 +78,41 @@ func (c *HTTPClient) Connect(ctx context.Context) {
 			}
 		}()
 
-		for {
-			line, err := reader.ReadBytes('\n')
-			if err != nil {
-				log.Println(err.Error())
-
-				return
-			}
-
-			if len(line) > 0 {
-				// the structure of data is : `data:{"key":"value"}`
-				// below code will replace `data:` with "", leaving only json structured data.
-				if strings.Contains(string(line), "data:") {
-					str := strings.ReplaceAll(string(line), "data:", "")
-					str = strings.ReplaceAll(str, "\n", "")
-
-					bleData := &BleData{}
-					_ = json.Unmarshal([]byte(str), bleData)
-
-					c.dataCh <- bleData
-				}
+		for scanner.Scan() {
+			//log.Println(scanner.Text())
+			bleData := bleDataFromResult(scanner.Bytes())
+			if bleData != nil {
+				c.dataCh <- bleData
 			}
 		}
+		if err := scanner.Err(); err != nil {
+			log.Println(err.Error())
+		}
 	}()
+}
+
+func bleDataFromResult(aResult []byte) *BleData {
+	bleData := new(BleData)
+	err := json.Unmarshal(aResult, bleData)
+	if err != nil {
+		return nil
+	}
+	return bleData
 }
 
 // GetDataCh returns the streaming ble data channel
 func (c *HTTPClient) GetDataCh() <-chan *BleData {
 	return c.dataCh
+}
+
+type BleData struct {
+	Result struct {
+		Mac            string `json:"mac"`
+		ApMac          string `json:"apMac"`
+		Payload        []byte `json:"payload"`
+		Rssi           int    `json:"rssi"`
+		FrameType      string `json:"frameType"`
+		RadioMac       string `json:"radioMac"`
+		MacAddressType string `json:"macAddressType"`
+	} `json:"result"`
 }
