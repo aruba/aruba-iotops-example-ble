@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//       http://www.github.com/aruba-iotops-example-ble/LICENSE
+//	http://www.github.com/aruba-iotops-example-ble/LICENSE
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,42 +20,25 @@ import (
 )
 
 func TestMqttClient(t *testing.T) {
-	t.Parallel()
+	t.Setenv("APP_TO_BROKER_TOPIC", "iotops_topic")
+	t.Setenv("BROKER_TO_APP_TOPIC", "iotops_topic")
+	mqttClient := NewMqttClient()
+	mqttClient.Connect()
 
-	mqttClient := NewMqttClient("wss://test.mosquitto.org:8091/mqtt", "rw", "readwrite",
-		"random_client", "iotops_topic", "iotops_topic")
+	// pub
+	text := "iotops pub message : " + time.Now().String()
+	mqttClient.GetPubDataCh() <- text
 
-	tests := []struct {
-		name       string
-		mqttClient *MqttClient
-	}{
-		{name: "pub and sub", mqttClient: mqttClient},
-	}
+	// sub
+	var data []byte
+	go func() {
+		data = <-mqttClient.GetSubDataCh()
+	}()
 
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+	// verify
+	<-time.After(500 * time.Millisecond)
 
-			mqttClient.Connect()
-
-			// pub
-			text := "iotops pub message : " + time.Now().String()
-			mqttClient.GetPubDataCh() <- text
-
-			// sub
-			var data []byte
-
-			go func() {
-				data = <-mqttClient.GetSubDataCh()
-			}()
-
-			// verify
-			<-time.After(500 * time.Millisecond)
-
-			if !strings.Contains(string(data), "iotops pub message") {
-				t.Error("mqtt publish data failed")
-			}
-		})
+	if !strings.Contains(string(data), "iotops pub message") {
+		t.Error("mqtt publish data failed")
 	}
 }

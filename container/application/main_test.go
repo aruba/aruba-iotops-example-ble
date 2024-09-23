@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//       http://www.github.com/aruba-iotops-example-ble/LICENSE
+//	http://www.github.com/aruba-iotops-example-ble/LICENSE
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -43,7 +43,7 @@ func TestExampleApp(t *testing.T) {
 			server := SEServerMock()
 
 			// http client
-			log.Default().Println("Request Ble data and transfer it to a third party server")
+			log.Println("Request Ble data and transfer it to a third party server")
 
 			BleRequestURL := server.URL + "/api/v2/ble/stream/packets"
 			httpClient := NewHTTPClient(BleRequestURL, "", http.MethodGet)
@@ -52,7 +52,7 @@ func TestExampleApp(t *testing.T) {
 			mqttDataCh := make(chan string, 1)
 
 			// bleClient process ble data
-			go NewBleClient().ProcessBleData(httpClient.GetDataCh(), mqttDataCh)
+			go ProcessBleData(httpClient.GetDataCh(), mqttDataCh)
 
 			iBeaconData := &IBeaconData{}
 
@@ -71,7 +71,7 @@ func TestExampleApp(t *testing.T) {
 }
 
 func SEServerMock() *httptest.Server {
-	log.Default().Println("start HTTP server. send Ble data to client.")
+	log.Println("start HTTP server. send Ble data to client.")
 	// mock data
 	var frameType BleFrameType = 3
 

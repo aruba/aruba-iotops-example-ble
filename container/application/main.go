@@ -15,12 +15,11 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
-	"strings"
-
-	"github.com/google/uuid"
 )
 
 // IoT Operations example ble app is a demonstration of how to interact with HPE IoT Operations infrastructure service.
@@ -41,40 +40,8 @@ func main() {
 	// Example: http://apiGwUrl/$(api-method)
 	apiGwURL := os.Getenv("APIGW_URL")
 
-	// clientID is used to identify your MQTT connections.
-	// The value should not be the same as the value in the MQTT web page
-	// (MQTT web page : http://www.hivemq.com/demos/websocket-client/).
-	clientID := strings.ReplaceAll(uuid.New().String(), "-", "")
-
-	// MQTT url
-	serverURL := "wss://test.mosquitto.org:8091/mqtt"
-
-	// MQTT username/password
-	userName := "rw"
-	password := "readwrite"
-
-	// MQTT publish data topic.
-	// default topic name is "app2broker_topic".
-	// IoT Operations data will be sent into this topic,
-	// you can subscribe this topic in the MQTT web page.
-	pubTopic := os.Getenv("APP_TO_BROKER_TOPIC")
-	if pubTopic == "" {
-		pubTopic = "app2broker_topic"
-	}
-
-	// MQTT subscribe data topic.
-	// default topic name is "broker2app_topic"
-	// you can send data into this topic through MQTT web page,
-	// Example app will accept data from that topic.
-	subTopic := os.Getenv("BROKER_TO_APP_TOPIC")
-	if subTopic == "" {
-		subTopic = "broker2app_topic"
-	}
-
-	log.Println("Example app start")
-
 	// mqtt client
-	mqttClient := NewMqttClient(serverURL, userName, password, clientID, pubTopic, subTopic)
+	mqttClient := NewMqttClient()
 	mqttClient.Connect()
 
 	// bleAPIURL: example app will get data from HPE IoT Operations infrastructure services through this API url
@@ -82,7 +49,35 @@ func main() {
 	httpClient := NewHTTPClient(bleAPIURL, apiKey, http.MethodGet)
 	httpClient.Connect(context.Background())
 
-	// bleClient: process ble data
-	bleClient := NewBleClient()
-	bleClient.ProcessBleData(httpClient.GetDataCh(), mqttClient.GetPubDataCh())
+	ProcessBleData(httpClient.GetDataCh(), mqttClient.GetPubDataCh())
+}
+
+const minBleDataLen = 30
+
+// ProcessBleData get data from HPE IoT Operations infrastructure service.
+// then decode and decorate and put data into data channel,
+// data channel will be consumed by MQTT client.
+func ProcessBleData(httpDataCh <-chan *BleData, mqttDataCh chan<- string) {
+	for bleData := range httpDataCh {
+		if len(bleData.Data) < minBleDataLen {
+			continue
+		}
+
+		// below is to convert iBeacon byte data to iBeacon string data.
+		// you need to overwrite this code when you decode your device data.
+		// note: field "data" is hexadecimal byte array.
+		// If you want to get string data. please process it with method hex.EncodeToString([]byte)
+		iBeaconData := &IBeaconData{
+			DeviceClass: "iBeacon",
+			UUID:        hex.EncodeToString(bleData.Data[9:25]),
+			Major:       hex.EncodeToString(bleData.Data[25:27]),
+			Minor:       hex.EncodeToString(bleData.Data[27:29]),
+			Power:       hex.EncodeToString(bleData.Data[29:30]),
+		}
+		iBeacon, _ := json.Marshal(iBeaconData)
+
+		log.Println("iBeacon uuid: " + iBeaconData.UUID)
+
+		mqttDataCh <- string(iBeacon)
+	}
 }
