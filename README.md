@@ -82,7 +82,7 @@ func (c *httpClient) Connect() {
 }
 ```
 
-**Note**: More IoTOps API please visit [https://app.swaggerhub.com/apis/davix/aruba_iot_gateway_container_api/2.0](https://app.swaggerhub.com/apis/davix/aruba_iot_gateway_container_api/2.0)
+**Note**: Detailed documentation for IoT Partner APIs please visit [https://app.swaggerhub.com/apis-docs/davix/iotops-partner-api/3.1](https://app.swaggerhub.com/apis-docs/davix/iotops-partner-api/3.1)
 
 ## Build and Application Onboard
 ### Container Build
