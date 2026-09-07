@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//       http://www.github.com/aruba-iotops-example-ble/LICENSE
+//	http://www.github.com/aruba-iotops-example-ble/LICENSE
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"time"
@@ -30,7 +31,7 @@ func NewHTTPClient(url, apiKey, method string) *HTTPClient {
 		URL:    url,
 		APIKey: apiKey,
 		Method: method,
-		dataCh: make(chan []byte, 1),
+		dataCh: make(chan *BleData, 1),
 	}
 }
 
@@ -38,13 +39,13 @@ type HTTPClient struct {
 	URL    string
 	APIKey string
 	Method string // HTTP Method: GET/POST/HEAD/OPTIONS/PUT/PATCH/DELETE/TRACE/CONNECT
-	dataCh chan []byte
+	dataCh chan *BleData
 }
 
 // Connect establish an HTTP connection.
 // response data will be put into filed "dataCh".
 func (c *HTTPClient) Connect(ctx context.Context) {
-	log.Default().Println("Http request, url: " + c.URL + " ; apiKey: " + c.APIKey)
+	log.Println("Http request, url: " + c.URL + " ; apiKey: " + c.APIKey)
 
 	req, _ := http.NewRequestWithContext(ctx, c.Method, c.URL, nil)
 	req.Header.Set("apikey", c.APIKey)
@@ -59,7 +60,7 @@ func (c *HTTPClient) Connect(ctx context.Context) {
 	}()
 
 	if err != nil {
-		log.Default().Println("HTTP request error!")
+		log.Println("HTTP request error!")
 		// If connect failed, will retry after 1 second
 		<-time.After(1 * time.Second)
 
@@ -68,7 +69,7 @@ func (c *HTTPClient) Connect(ctx context.Context) {
 		return
 	}
 
-	reader := bufio.NewReader(resp.Body)
+	scanner := bufio.NewScanner(resp.Body)
 
 	go func() {
 		defer func() {
@@ -77,24 +78,41 @@ func (c *HTTPClient) Connect(ctx context.Context) {
 			}
 		}()
 
-		for {
-			line, err := reader.ReadBytes('\n')
-			if err != nil {
-				log.Default().Println(err.Error())
-
-				return
+		for scanner.Scan() {
+			//log.Println(scanner.Text())
+			bleData := bleDataFromResult(scanner.Bytes())
+			if bleData != nil {
+				c.dataCh <- bleData
 			}
-
-			if len(line) > 0 {
-				c.dataCh <- line
-			}
+		}
+		if err := scanner.Err(); err != nil {
+			log.Println(err.Error())
 		}
 	}()
 }
 
-// GetDataCh return HTTP client filed "dataCh".
-// HTTP response data will be put into this field "dataCh".
-// method in "process_ble_data.go" file will consume this data from data channel.
-func (c *HTTPClient) GetDataCh() <-chan []byte {
+func bleDataFromResult(aResult []byte) *BleData {
+	bleData := new(BleData)
+	err := json.Unmarshal(aResult, bleData)
+	if err != nil {
+		return nil
+	}
+	return bleData
+}
+
+// GetDataCh returns the streaming ble data channel
+func (c *HTTPClient) GetDataCh() <-chan *BleData {
 	return c.dataCh
+}
+
+type BleData struct {
+	Result struct {
+		Mac            string `json:"mac"`
+		ApMac          string `json:"apMac"`
+		Payload        []byte `json:"payload"`
+		Rssi           int    `json:"rssi"`
+		FrameType      string `json:"frameType"`
+		RadioMac       string `json:"radioMac"`
+		MacAddressType string `json:"macAddressType"`
+	} `json:"result"`
 }

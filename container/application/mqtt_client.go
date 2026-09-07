@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//       http://www.github.com/aruba-iotops-example-ble/LICENSE
+//	http://www.github.com/aruba-iotops-example-ble/LICENSE
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,9 +16,12 @@ package main
 import (
 	"crypto/tls"
 	"log"
+	"os"
+	"strings"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/google/uuid"
 )
 
 const mqttVersion = 4
@@ -28,8 +31,37 @@ const mqttVersion = 4
 // It has two fields: PubDataCh、SubDataCh.
 // PubDataCh: put data into this field, then data will be sent to MQTT broker.
 // SubDataCh: get data from MQTT broker, then put data into this field.
-func NewMqttClient(url string, userName string, password string,
-	clientID string, pubTopic string, subTopic string) *MqttClient {
+func NewMqttClient() *MqttClient {
+	// clientID is used to identify your MQTT connections.
+	// The value should not be the same as the value in the MQTT web page
+	// (MQTT web page : http://www.hivemq.com/demos/websocket-client/).
+	clientID := strings.ReplaceAll(uuid.New().String(), "-", "")
+
+	// MQTT url
+	url := "wss://test.mosquitto.org:8091/mqtt"
+
+	// MQTT username/password
+	userName := "rw"
+	password := "readwrite"
+
+	// MQTT publish data topic.
+	// default topic name is "app2broker_topic".
+	// IoT Operations data will be sent into this topic,
+	// you can subscribe this topic in the MQTT web page.
+	pubTopic := os.Getenv("APP_TO_BROKER_TOPIC")
+	if pubTopic == "" {
+		pubTopic = "app2broker_topic"
+	}
+
+	// MQTT subscribe data topic.
+	// default topic name is "broker2app_topic"
+	// you can send data into this topic through MQTT web page,
+	// Example app will accept data from that topic.
+	subTopic := os.Getenv("BROKER_TO_APP_TOPIC")
+	if subTopic == "" {
+		subTopic = "broker2app_topic"
+	}
+
 	return &MqttClient{
 		URL:       url, // MQTT broker url
 		userName:  userName,
@@ -55,7 +87,7 @@ type MqttClient struct {
 
 // Connect establish a MQTT connection to publish and subscribe to MQTT broker.
 func (c *MqttClient) Connect() {
-	log.Default().Println("mqtt url : " + c.URL + " ; clientId :" +
+	log.Println("mqtt url : " + c.URL + " ; clientId :" +
 		c.ClientID + " ; pubTopic: " + c.PubTopic + " ; subtopic: " + c.SubTopic)
 
 	opts := mqtt.NewClientOptions().
@@ -69,20 +101,20 @@ func (c *MqttClient) Connect() {
 			c.SubDataCh <- message.Payload()
 		})
 	opts.OnConnect = func(client mqtt.Client) {
-		log.Default().Println("Mqtt Connected")
+		log.Println("Mqtt Connected")
 	}
 	opts.OnConnectionLost = func(client mqtt.Client, err error) {
-		log.Default().Printf("Connect lost: %v", err)
+		log.Printf("Connect lost: %v", err)
 	}
 
 	client := mqtt.NewClient(opts)
 	token := client.Connect()
 
 	if token.Wait() && token.Error() != nil {
-		log.Default().Println("mqtt connected fail! ")
+		log.Println("mqtt connected fail! ")
 
 		if token.Error() != nil {
-			log.Default().Println(token.Error().Error())
+			log.Println(token.Error().Error())
 		}
 
 		// If connect failed, will retry after 1 second
